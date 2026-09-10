@@ -1,0 +1,9 @@
+.worktrees/
+.superpowers/
+node_modules/
+.expo/
+dist/
+coverage/
+.env
+android/
+ios/
