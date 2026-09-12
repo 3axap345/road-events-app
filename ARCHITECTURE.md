@@ -32,10 +32,11 @@ React components compose state and rendering only. Complex business rules live i
 
 ## Map provider abstraction
 
-`features/map` defines provider-neutral regions, markers, callbacks, and a `MapProvider` component contract. The initial adapter uses `react-native-maps`: Google Maps on Android and the platform-default Apple Maps provider on iOS. No event-domain type imports a map SDK.
+`features/map` defines provider-neutral regions, markers, callbacks, and a `MapProvider` component contract. The current adapter uses `@maplibre/maplibre-react-native` on both Android and iOS. No event-domain type imports a map SDK.
 
-This decision is compatible with Expo managed workflow, CNG config plugins, and EAS development builds. Android Google Maps uses the build-time `GOOGLE_MAPS_ANDROID_API_KEY`; the iOS provider does not require Google configuration. A provider swap changes the adapter, not event lifecycle or repository logic.
+MapLibre is integrated through the Expo config plugin and requires a development build. The development configuration uses the public MapLibre demo style at `https://demotiles.maplibre.org/style.json`, so the MVP does not require a Google Maps API key or Google Maps Platform billing.
 
+The adapter converts provider-neutral `MapRegion` values into MapLibre bounds and maps application marker coordinates into MapLibre longitude/latitude order. A future tile or map-provider change remains isolated to the adapter and configuration layer rather than the event lifecycle, repository logic, or screen state.
 ## Supabase and data access
 
 The client exposes one validated Supabase client with public URL and anon key only. Auth restores a session or signs in anonymously; later phone, Google, and Apple linking attaches to the same boundary.
@@ -58,7 +59,7 @@ Denied, unavailable, or failed location resolves to the fixed Bishkek region. Ne
 
 Unit tests cover lifecycle, scoring, expiration, duplicate-vote guards, distance, duplicate detection, and permission-independent fallback. React Native Testing Library covers presentation and composed loading/empty/error states.
 
-Automated verification covers dependency installation, TypeScript, linting, tests, public Expo config, and EAS profile shape. Physical development builds must still verify Android Google Maps key restrictions/rendering, Android permission and GPS behavior, iOS Apple Maps rendering, iOS permission copy, and real Supabase Realtime delivery. No claim about those device behaviors is made until tested on their target hardware.
+Automated verification covers dependency installation, TypeScript, linting, tests, public Expo config, and EAS profile shape. Physical development builds must still verify MapLibre rendering on Android and iOS, Android permission and GPS behavior, iOS permission copy, and real Supabase Realtime delivery. No claim about those device behaviors is made until tested on their target hardware.
 
 ## Development build validation
 
@@ -75,7 +76,7 @@ The automated test suite verifies configuration contracts that can be checked wi
 - A separate iOS simulator development profile exists.
 - `expo-router` is configured as an Expo plugin.
 - `expo-location` is configured with a foreground location permission message.
-- `react-native-maps` is configured with the Android Google Maps API key field.
+- `@maplibre/maplibre-react-native` is configured as an Expo plugin.
 - TypeScript, ESLint, and the unit test suite pass.
 
 Run:

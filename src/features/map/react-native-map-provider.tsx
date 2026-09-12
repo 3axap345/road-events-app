@@ -1,28 +1,59 @@
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { Platform } from 'react-native';
+import {
+  Camera,
+  Map,
+  Marker,
+  UserLocation
+} from '@maplibre/maplibre-react-native';
+import { View } from 'react-native';
 
 import type { MapProvider } from './MapProvider';
+import { regionToBounds } from './maplibre-region';
+
+const MAP_STYLE_URL = 'https://demotiles.maplibre.org/style.json';
 
 export const ReactNativeMapProvider: MapProvider = ({
   region,
   markers,
   onMarkerPress,
   showsUserLocation = false
-}) => (
-  <MapView
-    provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-    region={region}
-    showsUserLocation={showsUserLocation}
-    style={{ flex: 1 }}
-  >
-    {markers.map((marker) => (
-      <Marker
-        key={marker.id}
-        coordinate={marker.coordinate}
-        title={marker.title}
-        description={marker.description}
-        onPress={() => onMarkerPress?.(marker.id)}
+}) => {
+  const bounds = regionToBounds(region);
+
+  return (
+    <Map
+      mapStyle={MAP_STYLE_URL}
+      style={{ flex: 1 }}
+    >
+      <Camera
+        initialViewState={{
+          bounds
+        }}
       />
-    ))}
-  </MapView>
-);
+
+      {showsUserLocation ? <UserLocation /> : null}
+
+      {markers.map((marker) => (
+        <Marker
+          key={marker.id}
+          id={marker.id}
+          lngLat={[
+            marker.coordinate.longitude,
+            marker.coordinate.latitude
+          ]}
+          onPress={() => onMarkerPress?.(marker.id)}
+        >
+          <View
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: 9,
+              backgroundColor: '#111827',
+              borderWidth: 3,
+              borderColor: '#ffffff'
+            }}
+          />
+        </Marker>
+      ))}
+    </Map>
+  );
+};

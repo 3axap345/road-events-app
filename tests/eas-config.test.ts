@@ -39,7 +39,9 @@ describe('development build configuration', () => {
 
     expect(pluginNames).toContain('expo-router');
     expect(pluginNames).toContain('expo-location');
-    expect(pluginNames).toContain('react-native-maps');
+    expect(pluginNames).toContain('@maplibre/maplibre-react-native');
+
+    expect(pluginNames).not.toContain('react-native-maps');
 
     const locationPlugin = plugins.find(
       (plugin) =>
@@ -53,20 +55,6 @@ describe('development build configuration', () => {
       expect(locationPlugin[1]).toMatchObject({
         locationWhenInUsePermission: expect.any(String)
       });
-    }
-
-    const mapsPlugin = plugins.find(
-      (plugin) =>
-        Array.isArray(plugin) &&
-        plugin[0] === 'react-native-maps'
-    );
-
-    expect(mapsPlugin).toBeDefined();
-
-    if (Array.isArray(mapsPlugin)) {
-      expect(mapsPlugin[1]).toHaveProperty(
-        'androidGoogleMapsApiKey'
-      );
     }
   });
 });

@@ -74,8 +74,7 @@ Configuration tests do not replace testing on an actual development build.
 The following behavior must be verified on a real Android device or emulator with the development client:
 
 - the application launches successfully;
-- Google Maps renders correctly;
-- the Android Google Maps API key is accepted by the native build;
+- the MapLibre map renders correctly using the configured development style;
 - foreground location permission is displayed by Android;
 - granting location permission shows the user's location;
 - denying location permission keeps the app usable and falls back to Bishkek;
