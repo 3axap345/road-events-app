@@ -59,3 +59,31 @@ Denied, unavailable, or failed location resolves to the fixed Bishkek region. Ne
 Unit tests cover lifecycle, scoring, expiration, duplicate-vote guards, distance, duplicate detection, and permission-independent fallback. React Native Testing Library covers presentation and composed loading/empty/error states.
 
 Automated verification covers dependency installation, TypeScript, linting, tests, public Expo config, and EAS profile shape. Physical development builds must still verify Android Google Maps key restrictions/rendering, Android permission and GPS behavior, iOS Apple Maps rendering, iOS permission copy, and real Supabase Realtime delivery. No claim about those device behaviors is made until tested on their target hardware.
+
+## Development build validation
+
+The development-build setup is validated in two layers.
+
+### Automated checks
+
+The automated test suite verifies configuration contracts that can be checked without building or launching a native application:
+
+- EAS development profiles exist.
+- The standard development profile uses `developmentClient: true`.
+- Android development builds are configured as APKs.
+- The regular iOS development profile targets physical devices.
+- A separate iOS simulator development profile exists.
+- `expo-router` is configured as an Expo plugin.
+- `expo-location` is configured with a foreground location permission message.
+- `react-native-maps` is configured with the Android Google Maps API key field.
+- TypeScript, ESLint, and the unit test suite pass.
+
+Run:
+
+```powershell
+npm run lint
+npm run typecheck
+npm test
+npx expo-doctor
+npx expo install --check
+```
