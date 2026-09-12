@@ -1,9 +1,5 @@
-import { StyleSheet, View } from 'react-native';
+import { MapScreen } from '../features/map/MapScreen';
 
-export default function MapRoutePlaceholder() {
-  return <View accessibilityLabel="Экран карты" style={styles.screen} />;
+export default function MapRoute() {
+  return <MapScreen />;
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFFFFF' }
-});

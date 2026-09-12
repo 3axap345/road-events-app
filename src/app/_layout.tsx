@@ -1,5 +1,24 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
+import { useEffect, useState } from 'react';
+
+import { ensureAnonymousSession } from '../features/auth/anonymous-session';
+import { getAnonymousAuthGateway } from '../services/supabase/client';
 
 export default function RootLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+  const [queryClient] = useState(
+    () => new QueryClient()
+  );
+
+  useEffect(() => {
+    void ensureAnonymousSession(
+      getAnonymousAuthGateway()
+    );
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </QueryClientProvider>
+  );
 }
