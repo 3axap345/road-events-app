@@ -1,11 +1,11 @@
 ﻿# **Driver Community Map**
-Community road-event map built with React Native, Expo, TypeScript, Supabase, and React Native Maps.
+Community road-event map built with React Native, Expo, TypeScript, Supabase, and MapLibre with the OpenFreeMap Liberty basemap.
 ## **Tech stack**
 - React Native
 - Expo SDK 57
 - TypeScript
 - Expo Router
-- React Native Maps
+- MapLibre React Native + OpenFreeMap Liberty
 - Expo Location
 - Supabase
 - Zustand
@@ -74,7 +74,8 @@ Configuration tests do not replace testing on an actual development build.
 The following behavior must be verified on a real Android device or emulator with the development client:
 
 - the application launches successfully;
-- the MapLibre map renders correctly using the configured development style;
+- the MapLibre map renders OpenFreeMap Liberty roads and street labels correctly;
+- map attribution is accessible with the event card open and does not overlap map controls;
 - foreground location permission is displayed by Android;
 - granting location permission shows the user's location;
 - denying location permission keeps the app usable and falls back to Bishkek;
@@ -105,6 +106,6 @@ The development profile must support the Expo development client required for na
 
 - Expo Router
 - Expo Location
-- React Native Maps
+- MapLibre React Native
 
 Do not modify package versions or native dependencies unless there is a concrete reason to do so.

@@ -11,7 +11,7 @@ import {
   regionToBounds
 } from './maplibre-region';
 
-const MAP_STYLE_URL = 'https://demotiles.maplibre.org/style.json';
+const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
 export const ReactNativeMapProvider: MapProvider = ({
   region,
@@ -32,6 +32,8 @@ export const ReactNativeMapProvider: MapProvider = ({
   return (
     <Map
       mapStyle={MAP_STYLE_URL}
+      attribution
+      attributionPosition={{ top: 144, right: 16 }}
       style={{ flex: 1 }}
     >
       <Camera

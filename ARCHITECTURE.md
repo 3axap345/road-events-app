@@ -34,7 +34,7 @@ React components compose state and rendering only. Complex business rules live i
 
 `features/map` defines provider-neutral regions, markers, callbacks, and a `MapProvider` component contract. The current adapter uses `@maplibre/maplibre-react-native` on both Android and iOS. No event-domain type imports a map SDK.
 
-MapLibre is integrated through the Expo config plugin and requires a development build. The development configuration uses the public MapLibre demo style at `https://demotiles.maplibre.org/style.json`, so the MVP does not require a Google Maps API key or Google Maps Platform billing.
+MapLibre is integrated through the Expo config plugin and requires a development build. The basemap uses OpenFreeMap Liberty at `https://tiles.openfreemap.org/styles/liberty`, with no API key or additional environment variables. Changing the style alone does not require rebuilding the development client. MapLibre's attribution control exposes the style's OpenMapTiles and OpenStreetMap attribution; it is positioned above the bottom event card and below the top notices. OpenFreeMap's public service does not provide an SLA.
 
 The adapter converts provider-neutral `MapRegion` values into MapLibre bounds and maps application marker coordinates into MapLibre longitude/latitude order. A future tile or map-provider change remains isolated to the adapter and configuration layer rather than the event lifecycle, repository logic, or screen state.
 ## Supabase and data access
