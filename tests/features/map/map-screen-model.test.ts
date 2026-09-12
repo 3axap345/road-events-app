@@ -6,6 +6,7 @@ import {
   buildEventCardModel,
   buildMapMarkers,
   getLocationFallbackNotice,
+  getUserLocationCoordinate,
   getSelectedEvent,
   resolveMapRegion
 } from '../../../src/features/map/map-screen-model';
@@ -68,6 +69,29 @@ describe('map screen model', () => {
         kind: 'unavailable'
       })
     ).toEqual(BISHKEK_REGION);
+  });
+
+  it('returns the granted coordinate for the user location marker', () => {
+    expect(
+      getUserLocationCoordinate({
+        kind: 'granted',
+        coordinate: {
+          latitude: 42.87,
+          longitude: 74.59
+        }
+      })
+    ).toEqual({
+      latitude: 42.87,
+      longitude: 74.59
+    });
+  });
+
+  it('returns no user location marker when location is unavailable', () => {
+    expect(
+      getUserLocationCoordinate({
+        kind: 'unavailable'
+      })
+    ).toBeNull();
   });
 
   it('shows a fallback notice when location permission is denied', () => {

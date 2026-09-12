@@ -1,7 +1,11 @@
 import { BISHKEK_REGION } from '../../constants/regions';
 import type { RoadEvent } from '../events/types';
 import type { CurrentLocationState } from '../location/location-types';
-import type { MapMarker, MapRegion } from './map-types';
+import type {
+  MapCoordinate,
+  MapMarker,
+  MapRegion
+} from './map-types';
 
 const LOCATION_REGION_DELTA = {
   latitudeDelta: BISHKEK_REGION.latitudeDelta,
@@ -48,6 +52,14 @@ export function resolveMapRegion(
   }
 
   return BISHKEK_REGION;
+}
+
+export function getUserLocationCoordinate(
+  location: CurrentLocationState
+): MapCoordinate | null {
+  return location.kind === 'granted'
+    ? location.coordinate
+    : null;
 }
 
 export function getLocationFallbackNotice(

@@ -17,7 +17,14 @@ export function useCurrentLocation(
   useEffect(() => {
     let isMounted = true;
 
-    void getCurrentLocation(gateway).then((nextLocation) => {
+    void getCurrentLocation(
+      gateway,
+      (cachedLocation) => {
+        if (isMounted) {
+          setLocation(cachedLocation);
+        }
+      }
+    ).then((nextLocation) => {
       if (isMounted) {
         setLocation(nextLocation);
       }

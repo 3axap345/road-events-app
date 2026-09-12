@@ -14,6 +14,9 @@ type MockForegroundLocationGateway = {
   hasServicesEnabledAsync: Mock<
     ForegroundLocationGateway['hasServicesEnabledAsync']
   >;
+  getLastKnownPositionAsync: Mock<
+    ForegroundLocationGateway['getLastKnownPositionAsync']
+  >;
   getCurrentPositionAsync: Mock<
     ForegroundLocationGateway['getCurrentPositionAsync']
   >;
@@ -31,6 +34,10 @@ function createGateway(
       .fn<ForegroundLocationGateway['hasServicesEnabledAsync']>()
       .mockResolvedValue(true),
 
+    getLastKnownPositionAsync: vi
+      .fn<ForegroundLocationGateway['getLastKnownPositionAsync']>()
+      .mockResolvedValue(null),
+
     getCurrentPositionAsync: vi
       .fn<ForegroundLocationGateway['getCurrentPositionAsync']>()
       .mockResolvedValue({
@@ -43,7 +50,7 @@ function createGateway(
 }
 
 describe('foreground location', () => {
-  it('returns a granted coordinate after foreground permission and available services', async () => {
+  it('uses a fresh coordinate when no cached position is available', async () => {
     const gateway = createGateway();
 
     await expect(getCurrentLocation(gateway)).resolves.toEqual({
@@ -57,6 +64,88 @@ describe('foreground location', () => {
     expect(
       gateway.requestForegroundPermissionsAsync
     ).toHaveBeenCalledOnce();
+
+    expect(
+      gateway.getLastKnownPositionAsync
+    ).toHaveBeenCalledOnce();
+  });
+
+  it('emits a cached coordinate before replacing it with a fresh coordinate', async () => {
+    let resolveFreshLocation: ((coordinate: {
+      latitude: number;
+      longitude: number;
+    }) => void) | undefined;
+
+    const gateway = createGateway({
+      getLastKnownPositionAsync: vi
+        .fn<ForegroundLocationGateway['getLastKnownPositionAsync']>()
+        .mockResolvedValue({
+          latitude: 42.87,
+          longitude: 74.59
+        }),
+      getCurrentPositionAsync: vi
+        .fn<ForegroundLocationGateway['getCurrentPositionAsync']>()
+        .mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              resolveFreshLocation = resolve;
+            })
+        )
+    });
+    const onCachedLocation = vi.fn();
+
+    const result = getCurrentLocation(gateway, onCachedLocation);
+
+    await vi.waitFor(() => {
+      expect(onCachedLocation).toHaveBeenCalledWith({
+        kind: 'granted',
+        coordinate: {
+          latitude: 42.87,
+          longitude: 74.59
+        }
+      });
+    });
+
+    resolveFreshLocation?.({
+      latitude: 42.88,
+      longitude: 74.6
+    });
+
+    await expect(result).resolves.toEqual({
+      kind: 'granted',
+      coordinate: {
+        latitude: 42.88,
+        longitude: 74.6
+      }
+    });
+  });
+
+  it('keeps the cached coordinate when fresh lookup fails', async () => {
+    const cachedCoordinate = {
+      latitude: 42.87,
+      longitude: 74.59
+    };
+    const gateway = createGateway({
+      getLastKnownPositionAsync: vi
+        .fn<ForegroundLocationGateway['getLastKnownPositionAsync']>()
+        .mockResolvedValue(cachedCoordinate),
+      getCurrentPositionAsync: vi
+        .fn<ForegroundLocationGateway['getCurrentPositionAsync']>()
+        .mockRejectedValue(new Error('Fresh location lookup failed'))
+    });
+    const onCachedLocation = vi.fn();
+
+    await expect(
+      getCurrentLocation(gateway, onCachedLocation)
+    ).resolves.toEqual({
+      kind: 'granted',
+      coordinate: cachedCoordinate
+    });
+
+    expect(onCachedLocation).toHaveBeenCalledWith({
+      kind: 'granted',
+      coordinate: cachedCoordinate
+    });
   });
 
   it('returns denied and falls back to Bishkek when foreground permission is denied', async () => {

@@ -9,6 +9,7 @@ import {
   buildEventCardModel,
   buildMapMarkers,
   getLocationFallbackNotice,
+  getUserLocationCoordinate,
   getSelectedEvent,
   resolveMapRegion
 } from './map-screen-model';
@@ -48,6 +49,8 @@ export function MapScreen({
 
   const region = resolveMapRegion(location);
 
+  const userLocation = getUserLocationCoordinate(location);
+
   const fallbackNotice =
     getLocationFallbackNotice(location);
 
@@ -65,6 +68,7 @@ export function MapScreen({
       <ReactNativeMapProvider
         region={region}
         markers={markers}
+        userLocation={userLocation ?? undefined}
         onMarkerPress={selectEvent}
         showsUserLocation={location.kind === 'granted'}
       />

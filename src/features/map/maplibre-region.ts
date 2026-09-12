@@ -1,4 +1,7 @@
-import type { MapRegion } from './map-types';
+import type {
+  MapCoordinate,
+  MapRegion
+} from './map-types';
 
 export type MapLibreBounds = [
   west: number,
@@ -17,4 +20,19 @@ export function regionToBounds(region: MapRegion): MapLibreBounds {
     region.longitude + halfLongitudeDelta,
     region.latitude + halfLatitudeDelta
   ];
+}
+
+export function getUserLocationCameraStop(
+  userLocation?: MapCoordinate
+): { center: [longitude: number, latitude: number] } | undefined {
+  if (!userLocation) {
+    return undefined;
+  }
+
+  return {
+    center: [
+      userLocation.longitude,
+      userLocation.latitude
+    ]
+  };
 }

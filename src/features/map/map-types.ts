@@ -18,6 +18,7 @@ export interface MapMarker {
 export interface MapProviderProps {
   region: MapRegion;
   markers: readonly MapMarker[];
+  userLocation?: MapCoordinate;
   onMarkerPress?: (markerId: string) => void;
   showsUserLocation?: boolean;
 }

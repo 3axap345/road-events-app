@@ -1,23 +1,33 @@
 import {
   Camera,
   Map,
-  Marker,
-  UserLocation
+  Marker
 } from '@maplibre/maplibre-react-native';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { MapProvider } from './MapProvider';
-import { regionToBounds } from './maplibre-region';
+import {
+  getUserLocationCameraStop,
+  regionToBounds
+} from './maplibre-region';
 
 const MAP_STYLE_URL = 'https://demotiles.maplibre.org/style.json';
 
 export const ReactNativeMapProvider: MapProvider = ({
   region,
   markers,
+  userLocation,
   onMarkerPress,
   showsUserLocation = false
 }) => {
   const bounds = regionToBounds(region);
+
+  const userLocationCameraStop =
+    getUserLocationCameraStop(userLocation);
+
+  const cameraKey = userLocation
+    ? `user-location-${userLocation.latitude}-${userLocation.longitude}`
+    : 'fallback-region';
 
   return (
     <Map
@@ -25,12 +35,28 @@ export const ReactNativeMapProvider: MapProvider = ({
       style={{ flex: 1 }}
     >
       <Camera
+        key={cameraKey}
         initialViewState={{
-          bounds
+          ...(userLocationCameraStop ?? { bounds })
         }}
+        trackUserLocation={
+          showsUserLocation ? 'default' : undefined
+        }
       />
 
-      {showsUserLocation ? <UserLocation /> : null}
+      {userLocation ? (
+        <Marker
+          id="current-user-location"
+          lngLat={[
+            userLocation.longitude,
+            userLocation.latitude
+          ]}
+        >
+          <View style={styles.userLocationMarker}>
+            <View style={styles.userLocationDot} />
+          </View>
+        </Marker>
+      ) : null}
 
       {markers.map((marker) => (
         <Marker
@@ -57,3 +83,20 @@ export const ReactNativeMapProvider: MapProvider = ({
     </Map>
   );
 };
+
+const styles = StyleSheet.create({
+  userLocationMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF'
+  },
+  userLocationDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#38BDF8'
+  }
+});
