@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-import type { AnonymousAuthGateway } from '../../features/auth/anonymous-session';
+import { requireAuthenticatedUserId, type AuthenticatedUserGateway } from '../../features/auth/authenticated-user';
+import type { RoadEventsWriteGateway } from '../../features/events/create-event';
 import type {
   RoadEventsReadClient,
   RoadEventsReadResult
@@ -8,6 +9,7 @@ import type {
 import { getSupabaseEnvironment } from './env';
 
 let supabaseClient: SupabaseClient | null = null;
+let anonymousAuthGateway: AuthenticatedUserGateway | null = null;
 
 export function getSupabaseClient(): SupabaseClient {
   if (!supabaseClient) {
@@ -70,12 +72,28 @@ function toAnonymousAuthResult(result: {
   };
 }
 
-export function getAnonymousAuthGateway(): AnonymousAuthGateway {
+export function getAnonymousAuthGateway(): AuthenticatedUserGateway {
+  if (anonymousAuthGateway) return anonymousAuthGateway;
   const auth = getSupabaseClient().auth;
 
-  return {
+  anonymousAuthGateway = {
+    getUser: async () => {
+      const { data, error } = await auth.getUser();
+      return { userId: data.user?.id ?? null, error: error ? new Error(error.message) : null };
+    },
     getSession: async () => toAnonymousAuthResult(await auth.getSession()),
     signInAnonymously: async () =>
       toAnonymousAuthResult(await auth.signInAnonymously())
+  };
+  return anonymousAuthGateway;
+}
+
+export function getRoadEventsWriteGateway(): RoadEventsWriteGateway {
+  return {
+    getUserId: () => requireAuthenticatedUserId(getAnonymousAuthGateway()),
+    insert: async (payload) => {
+      const { error } = await getSupabaseClient().from('road_events').insert(payload);
+      return { error };
+    }
   };
 }

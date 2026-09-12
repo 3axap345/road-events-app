@@ -19,6 +19,8 @@ export interface MapProviderProps {
   region: MapRegion;
   markers: readonly MapMarker[];
   userLocation?: MapCoordinate;
+  draftLocation?: MapCoordinate;
+  onMapLongPress?: (coordinate: MapCoordinate) => void;
   onMarkerPress?: (markerId: string) => void;
   showsUserLocation?: boolean;
 }

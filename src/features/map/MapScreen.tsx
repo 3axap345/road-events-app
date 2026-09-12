@@ -14,6 +14,8 @@ import {
   resolveMapRegion
 } from './map-screen-model';
 import { ReactNativeMapProvider } from './react-native-map-provider';
+import { ReportLocationControls } from './ReportLocationControls';
+import { useSubmitReport } from './use-submit-report';
 
 interface MapScreenProps {
   now?: () => Date;
@@ -24,6 +26,9 @@ export function MapScreen({
 }: MapScreenProps) {
   const activeEventsQuery = useActiveEvents();
   const location = useCurrentLocation();
+  const submit = useSubmitReport();
+  const reportLocation = useMapSelectionStore((state) => state.reportLocation);
+  const dispatchReportLocation = useMapSelectionStore((state) => state.dispatchReportLocation);
 
   const selectedEventId = useMapSelectionStore(
     (state) => state.selectedEventId
@@ -69,6 +74,10 @@ export function MapScreen({
         region={region}
         markers={markers}
         userLocation={userLocation ?? undefined}
+        draftLocation={reportLocation.coordinate ?? undefined}
+        onMapLongPress={reportLocation.kind === 'selecting'
+          ? (coordinate) => dispatchReportLocation({ type: 'select', coordinate })
+          : undefined}
         onMarkerPress={selectEvent}
         showsUserLocation={location.kind === 'granted'}
       />
@@ -95,6 +104,7 @@ export function MapScreen({
           onDismiss={clearSelection}
         />
       ) : null}
+      <ReportLocationControls state={reportLocation} dispatch={dispatchReportLocation} onSubmit={submit} />
     </View>
   );
 }

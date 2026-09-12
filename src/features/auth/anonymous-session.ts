@@ -12,7 +12,17 @@ export interface AnonymousAuthGateway {
   signInAnonymously(): Promise<AuthResult>;
 }
 
-export async function ensureAnonymousSession(
+const pendingSessions = new WeakMap<AnonymousAuthGateway, Promise<AnonymousSession>>();
+
+export function ensureAnonymousSession(auth: AnonymousAuthGateway): Promise<AnonymousSession> {
+  const pending = pendingSessions.get(auth);
+  if (pending) return pending;
+  const request = establishSession(auth).finally(() => pendingSessions.delete(auth));
+  pendingSessions.set(auth, request);
+  return request;
+}
+
+async function establishSession(
   auth: AnonymousAuthGateway
 ): Promise<AnonymousSession> {
   const existing = await auth.getSession();

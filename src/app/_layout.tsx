@@ -13,7 +13,10 @@ export default function RootLayout() {
   useEffect(() => {
     void ensureAnonymousSession(
       getAnonymousAuthGateway()
-    );
+    ).catch(() => {
+      // Reporting retries authentication and presents failures in its confirmation UI.
+      console.warn('Anonymous session bootstrap failed. Authentication will retry when reporting.');
+    });
   }, []);
 
   return (

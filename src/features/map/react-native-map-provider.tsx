@@ -17,6 +17,8 @@ export const ReactNativeMapProvider: MapProvider = ({
   region,
   markers,
   userLocation,
+  draftLocation,
+  onMapLongPress,
   onMarkerPress,
   showsUserLocation = false
 }) => {
@@ -32,6 +34,10 @@ export const ReactNativeMapProvider: MapProvider = ({
   return (
     <Map
       mapStyle={MAP_STYLE_URL}
+      onLongPress={onMapLongPress ? (event) => {
+        const [longitude, latitude] = event.nativeEvent.lngLat;
+        onMapLongPress({ latitude, longitude });
+      } : undefined}
       attribution
       attributionPosition={{ top: 144, right: 16 }}
       style={{ flex: 1 }}
@@ -82,11 +88,27 @@ export const ReactNativeMapProvider: MapProvider = ({
           />
         </Marker>
       ))}
+      {draftLocation ? (
+        <Marker
+          id="report-location-draft"
+          lngLat={[draftLocation.longitude, draftLocation.latitude]}
+        >
+          <View pointerEvents="none" style={styles.draftMarker} />
+        </Marker>
+      ) : null}
     </Map>
   );
 };
 
 const styles = StyleSheet.create({
+  draftMarker: {
+    width: 28,
+    height: 28,
+    borderRadius: 4,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    backgroundColor: '#B45309'
+  },
   userLocationMarker: {
     width: 24,
     height: 24,
