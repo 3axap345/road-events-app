@@ -14,7 +14,11 @@ export const useMapSelectionStore = create<MapSelectionState>(
   (set) => ({
     reportLocation: { kind: 'idle', coordinate: null, eventType: null },
     dispatchReportLocation: (action) => set((state) => ({
-      reportLocation: reduceReportLocation(state.reportLocation, action)
+      reportLocation: reduceReportLocation(state.reportLocation, action),
+      selectedEventId: action.type === 'long-press'
+        && (state.reportLocation.kind === 'idle' || state.reportLocation.kind === 'choosing-type')
+        ? null
+        : state.selectedEventId
     })),
     selectedEventId: null,
 

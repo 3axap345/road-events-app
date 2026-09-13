@@ -38,7 +38,7 @@ describe('map screen model', () => {
           latitude: 42.8746,
           longitude: 74.5698
         },
-        title: 'Дорожная опасность'
+        title: 'Road hazard'
       }
     ]);
   });
@@ -123,12 +123,23 @@ describe('map screen model', () => {
 
   it('builds compact metadata for the selected event', () => {
     expect(buildEventCardModel(event, now)).toEqual({
-      id: 'road_hazard',
-      title: 'Дорожная опасность',
-      ageLabel: '5 мин назад',
-      confirmationLabel: '2 подтверждения',
-      lastConfirmationLabel:
-        'Последнее подтверждение: 2 мин назад'
+      eventType: 'road_hazard',
+      title: 'Road hazard',
+      ageLabel: '5 min ago'
     });
+  });
+
+  it.each([
+    ['road_check', 'Road check'], ['accident', 'Accident'],
+    ['road_hazard', 'Road hazard'], ['road_closure', 'Road closure']
+  ] as const)('builds details for %s', (eventType, title) => {
+    expect(buildEventCardModel({ ...event, eventType }, now)).toEqual({ eventType, title, ageLabel: '5 min ago' });
+  });
+
+  it.each([
+    [0, 'Just now'], [59, 'Just now'], [60, '1 min ago'],
+    [3600, '1 hr ago'], [86400, '1 day ago'], [172800, '2 days ago'], [-60, 'Just now']
+  ])('formats an age of %s seconds', (seconds, expected) => {
+    expect(buildEventCardModel({ ...event, createdAt: new Date(now.getTime() - Number(seconds) * 1000) }, now).ageLabel).toBe(expected);
   });
 });

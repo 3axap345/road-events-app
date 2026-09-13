@@ -13,18 +13,16 @@ const LOCATION_REGION_DELTA = {
 };
 
 const EVENT_TYPE_LABELS: Record<RoadEvent['eventType'], string> = {
-  road_check: 'Дорожная проверка',
-  accident: 'ДТП',
-  road_hazard: 'Дорожная опасность',
-  road_closure: 'Перекрытие дороги'
+  road_check: 'Road check',
+  accident: 'Accident',
+  road_hazard: 'Road hazard',
+  road_closure: 'Road closure'
 };
 
 export interface EventCardModel {
-  id: string;
+  eventType: RoadEvent['eventType'];
   title: string;
   ageLabel: string;
-  confirmationLabel: string;
-  lastConfirmationLabel: string | null;
 }
 
 export function buildMapMarkers(
@@ -92,18 +90,9 @@ export function buildEventCardModel(
   now: Date
 ): EventCardModel {
   return {
-    id: event.id,
+    eventType: event.eventType,
     title: getEventTypeLabel(event.eventType),
-    ageLabel: formatRelativeAge(event.createdAt, now),
-    confirmationLabel: formatConfirmationCount(
-      event.confirmationCount
-    ),
-    lastConfirmationLabel: event.lastConfirmedAt
-      ? `Последнее подтверждение: ${formatRelativeAge(
-          event.lastConfirmedAt,
-          now
-        )}`
-      : null
+    ageLabel: formatRelativeAge(event.createdAt, now)
   };
 }
 
@@ -127,37 +116,20 @@ function formatRelativeAge(
   );
 
   if (minutes < 1) {
-    return 'только что';
+    return 'Just now';
   }
 
   if (minutes < 60) {
-    return `${minutes} мин назад`;
+    return `${minutes} min ago`;
   }
 
   const hours = Math.floor(minutes / 60);
 
   if (hours < 24) {
-    return `${hours} ч назад`;
+    return `${hours} hr ago`;
   }
 
   const days = Math.floor(hours / 24);
 
-  return `${days} дн назад`;
-}
-
-function formatConfirmationCount(
-  count: number
-): string {
-  if (count % 10 === 1 && count % 100 !== 11) {
-    return `${count} подтверждение`;
-  }
-
-  if (
-    [2, 3, 4].includes(count % 10) &&
-    ![12, 13, 14].includes(count % 100)
-  ) {
-    return `${count} подтверждения`;
-  }
-
-  return `${count} подтверждений`;
+  return `${days} ${days === 1 ? 'day' : 'days'} ago`;
 }
