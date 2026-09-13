@@ -32,6 +32,7 @@ export function buildMapMarkers(
 ): MapMarker[] {
   return events.map((event) => ({
     id: event.id,
+    eventType: event.eventType,
     coordinate: {
       latitude: event.latitude,
       longitude: event.longitude

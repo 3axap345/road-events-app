@@ -6,6 +6,7 @@ import {
 import { StyleSheet, View } from 'react-native';
 
 import type { MapProvider } from './MapProvider';
+import { RoadEventMarker } from './RoadEventMarker';
 import {
   getUserLocationCameraStop,
   regionToBounds
@@ -76,16 +77,7 @@ export const ReactNativeMapProvider: MapProvider = ({
           ]}
           onPress={() => onMarkerPress?.(marker.id)}
         >
-          <View
-            style={{
-              width: 18,
-              height: 18,
-              borderRadius: 9,
-              backgroundColor: '#111827',
-              borderWidth: 3,
-              borderColor: '#ffffff'
-            }}
-          />
+          <RoadEventMarker eventType={marker.eventType} label={marker.title} />
         </Marker>
       ))}
       {draftLocation ? (

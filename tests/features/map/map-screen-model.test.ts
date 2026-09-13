@@ -33,6 +33,7 @@ describe('map screen model', () => {
     expect(buildMapMarkers([event])).toEqual([
       {
         id: 'road_hazard',
+        eventType: 'road_hazard',
         coordinate: {
           latitude: 42.8746,
           longitude: 74.5698

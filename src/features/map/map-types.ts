@@ -1,3 +1,5 @@
+import type { RoadEventType } from '../events/types';
+
 export interface MapCoordinate {
   latitude: number;
   longitude: number;
@@ -9,6 +11,7 @@ export interface MapRegion extends MapCoordinate {
 }
 
 export interface MapMarker {
+  eventType?: RoadEventType;
   id: string;
   coordinate: MapCoordinate;
   title: string;
