@@ -16,6 +16,7 @@ import {
 import { ReactNativeMapProvider } from './react-native-map-provider';
 import { ReportLocationControls } from './ReportLocationControls';
 import { useSubmitReport } from './use-submit-report';
+import { buildReportMapInteractions } from './report-location';
 
 interface MapScreenProps {
   now?: () => Date;
@@ -75,10 +76,7 @@ export function MapScreen({
         markers={markers}
         userLocation={userLocation ?? undefined}
         draftLocation={reportLocation.coordinate ?? undefined}
-        onMapLongPress={reportLocation.kind === 'selecting'
-          ? (coordinate) => dispatchReportLocation({ type: 'select', coordinate })
-          : undefined}
-        onMarkerPress={selectEvent}
+        {...buildReportMapInteractions(reportLocation, dispatchReportLocation, selectEvent)}
         showsUserLocation={location.kind === 'granted'}
       />
 

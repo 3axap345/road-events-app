@@ -1,18 +1,30 @@
 import type { RoadEventType } from '../events/types';
-import type { MapCoordinate } from './map-types';
+import type { MapCoordinate, MapProviderProps } from './map-types';
 
 export type ReportLocationState =
   | { kind: 'idle'; coordinate: null; eventType: null }
-  | { kind: 'selecting'; coordinate: MapCoordinate | null; eventType: RoadEventType | null }
   | { kind: 'choosing-type'; coordinate: MapCoordinate; eventType: RoadEventType | null }
   | { kind: 'ready'; coordinate: MapCoordinate; eventType: RoadEventType; error?: string }
   | { kind: 'submitting'; coordinate: MapCoordinate; eventType: RoadEventType };
 
 export type ReportLocationAction =
-  | { type: 'start' | 'cancel' | 'continue' | 'back' | 'submit' | 'submitted' }
+  | { type: 'cancel' | 'continue' | 'back' | 'submit' | 'submitted' }
   | { type: 'submission-failed'; error: string }
   | { type: 'select-type'; eventType: RoadEventType }
-  | { type: 'select'; coordinate: MapCoordinate };
+  | { type: 'long-press'; coordinate: MapCoordinate };
+
+export function buildReportMapInteractions(
+  state: ReportLocationState,
+  dispatch: (action: ReportLocationAction) => void,
+  onMarkerPress: (id: string) => void
+): Pick<MapProviderProps, 'onMapLongPress' | 'onMarkerPress'> {
+  return {
+    onMarkerPress,
+    onMapLongPress: state.kind === 'idle' || state.kind === 'choosing-type'
+      ? (coordinate) => dispatch({ type: 'long-press', coordinate })
+      : undefined
+  };
+}
 
 export function reduceReportLocation(
   state: ReportLocationState,
@@ -31,26 +43,21 @@ export function reduceReportLocation(
     case 'submitted':
     case 'submission-failed':
       return state;
-    case 'start':
-      return { kind: 'selecting', coordinate: null, eventType: null };
     case 'cancel':
       return { kind: 'idle', coordinate: null, eventType: null };
-    case 'select':
-      return state.kind === 'selecting'
-        ? { ...state, coordinate: action.coordinate }
+    case 'long-press':
+      return state.kind === 'idle' || state.kind === 'choosing-type'
+        ? { kind: 'choosing-type', coordinate: action.coordinate, eventType: state.eventType }
         : state;
     case 'select-type':
       return state.kind === 'choosing-type'
         ? { ...state, eventType: action.eventType }
         : state;
     case 'back':
-      if (state.kind === 'choosing-type') return { ...state, kind: 'selecting' };
+      if (state.kind === 'choosing-type') return { kind: 'idle', coordinate: null, eventType: null };
       if (state.kind === 'ready') return { ...state, kind: 'choosing-type' };
       return state;
     case 'continue':
-      if (state.kind === 'selecting' && state.coordinate) {
-        return { kind: 'choosing-type', coordinate: state.coordinate, eventType: state.eventType };
-      }
       if (state.kind === 'choosing-type' && state.eventType) {
         return { kind: 'ready', coordinate: state.coordinate, eventType: state.eventType };
       }

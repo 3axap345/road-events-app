@@ -17,27 +17,18 @@ interface Props {
 }
 
 export function ReportLocationControls({ state, dispatch, onSubmit }: Props) {
+  if (state.kind === 'idle') return null;
   const submitting = state.kind === 'submitting';
-  const canContinue = (state.kind === 'selecting' && state.coordinate !== null)
-    || (state.kind === 'choosing-type' && state.eventType !== null)
+  const canContinue = (state.kind === 'choosing-type' && state.eventType !== null)
     || state.kind === 'ready';
   return (
     <View style={styles.container}>
-      {state.kind === 'idle' ? (
-        <Pressable accessibilityRole="button" style={styles.button} onPress={() => dispatch({ type: 'start' })}>
-          <Text style={styles.buttonText}>Сообщить о событии</Text>
-        </Pressable>
-      ) : (
         <View style={styles.panel}>
           <ScrollView style={styles.scrollContent} contentContainerStyle={styles.panelContent}>
           <Text style={styles.message} accessibilityLiveRegion="polite">
             {state.kind === 'ready' || state.kind === 'submitting'
               ? `Проверьте событие перед отправкой.\n${TYPE_LABELS[state.eventType]} (${state.eventType})\nШирота: ${state.coordinate.latitude}\nДолгота: ${state.coordinate.longitude}`
-              : state.kind === 'choosing-type'
-                ? 'Выберите тип события'
-              : state.coordinate
-                ? 'Место выбрано. Удерживайте другую точку, чтобы изменить его.'
-                : 'Удерживайте нужное место на карте.'}
+              : 'Выберите тип события. Удерживайте другую точку на карте, чтобы изменить место.'}
           </Text>
           {state.kind === 'ready' && state.error ? (
             <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
@@ -59,11 +50,9 @@ export function ReportLocationControls({ state, dispatch, onSubmit }: Props) {
           ) : null}
           </ScrollView>
           <View style={styles.actions}>
-            {state.kind === 'choosing-type' || state.kind === 'ready' || submitting ? (
               <Pressable accessibilityRole="button" disabled={submitting} accessibilityState={{ disabled: submitting }} style={styles.cancel} onPress={() => dispatch({ type: 'back' })}>
                 <Text style={styles.message}>Назад</Text>
               </Pressable>
-            ) : null}
             <Pressable accessibilityRole="button" disabled={submitting} accessibilityState={{ disabled: submitting }} style={styles.cancel} onPress={() => dispatch({ type: 'cancel' })}>
               <Text style={styles.message}>Отмена</Text>
             </Pressable>
@@ -74,11 +63,10 @@ export function ReportLocationControls({ state, dispatch, onSubmit }: Props) {
                 style={[styles.button, styles.primaryAction, !canContinue && styles.disabled]}
                 onPress={() => state.kind === 'ready' ? void onSubmit() : dispatch({ type: 'continue' })}
               >
-                <Text style={styles.buttonText}>{submitting ? 'Отправка…' : state.kind === 'choosing-type' ? 'Confirm' : state.kind === 'ready' ? 'Отправить' : 'Продолжить'}</Text>
+                <Text style={styles.buttonText}>{submitting ? 'Отправка…' : state.kind === 'choosing-type' ? 'Confirm' : 'Отправить'}</Text>
               </Pressable>
           </View>
         </View>
-      )}
     </View>
   );
 }
