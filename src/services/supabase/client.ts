@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 import { requireAuthenticatedUserId, type AuthenticatedUserGateway } from '../../features/auth/authenticated-user';
 import type { RoadEventsWriteGateway } from '../../features/events/create-event';
+import type { EventVotesGateway } from '../../features/voting/vote-repository';
 import type {
   RoadEventsReadClient,
   RoadEventsReadResult
@@ -102,6 +103,22 @@ export function getRoadEventsWriteGateway(): RoadEventsWriteGateway {
     getUserId: () => requireAuthenticatedUserId(getAnonymousAuthGateway()),
     insert: async (payload) => {
       const { error } = await getSupabaseClient().from('road_events').insert(payload);
+      return { error };
+    }
+  };
+}
+
+export function getEventVotesGateway(): EventVotesGateway {
+  return {
+    getUserId: () => requireAuthenticatedUserId(getAnonymousAuthGateway()),
+    read: async (eventId, userId) => {
+      const { data, error } = await getSupabaseClient()
+        .from('event_votes').select('event_id,user_id,vote_type')
+        .eq('event_id', eventId).eq('user_id', userId).maybeSingle();
+      return { data, error };
+    },
+    cast: async (input) => {
+      const { error } = await getSupabaseClient().rpc('cast_event_vote', input);
       return { error };
     }
   };

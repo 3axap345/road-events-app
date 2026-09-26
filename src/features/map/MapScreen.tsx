@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useMapSelectionStore } from '../../stores/map-selection-store';
 import { useActiveEvents } from '../events/use-active-events';
 import { useCurrentLocation } from '../location/use-current-location';
-import { EventDetailsCard } from './EventDetailsCard';
+import { EventVoteDetails } from '../voting/EventVoteDetails';
 import {
   buildEventCardModel,
   buildMapMarkers,
@@ -96,8 +96,10 @@ export function MapScreen({
         </View>
       ) : null}
 
-      {selectedEventCard ? (
-        <EventDetailsCard
+      {selectedEvent && selectedEventCard ? (
+        <EventVoteDetails
+          key={selectedEvent.id}
+          event={selectedEvent}
           model={selectedEventCard}
           onDismiss={clearSelection}
         />
