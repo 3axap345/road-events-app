@@ -17,21 +17,18 @@ export function isExpired(event: Pick<RoadEvent, 'expiresAt'>, now: Date): boole
 }
 
 export function getEventState(
-  event: Pick<RoadEvent, 'confidence' | 'createdAt' | 'lastConfirmedAt' | 'expiresAt'>,
-  now: Date,
-  config: EventLifecycleConfig = EVENT_LIFECYCLE
+  event: Pick<RoadEvent, 'status' | 'confirmationCount' | 'goneCount' | 'expiresAt'>,
+  now: Date
 ): RoadEventStatus {
-  if (event.confidence <= config.removalThreshold) {
-    return 'removed';
-  }
+  // Testable mirror only: persisted transitions are owned by PostgreSQL.
+  if (event.status === 'removed' || event.status === 'expired') return event.status;
 
   if (isExpired(event, now)) {
     return 'expired';
   }
 
-  const freshnessTimestamp = event.lastConfirmedAt ?? event.createdAt;
-
-  return now.getTime() - freshnessTimestamp.getTime() >= config.staleAfterMs
-    ? 'stale'
-    : 'active';
+  if (event.status === 'active' && event.goneCount >= 3 && event.goneCount > event.confirmationCount) {
+    return 'removed';
+  }
+  return event.status;
 }

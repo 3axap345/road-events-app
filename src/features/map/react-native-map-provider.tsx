@@ -5,7 +5,7 @@ import {
 } from '@maplibre/maplibre-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import type { MapProvider } from './MapProvider';
+import type { MapProviderProps } from './map-types';
 import { RoadEventMarker } from './RoadEventMarker';
 import {
   getUserLocationCameraStop,
@@ -14,21 +14,22 @@ import {
 
 const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
-export const ReactNativeMapProvider: MapProvider = ({
+export const ReactNativeMapProvider = ({
   region,
   markers,
   userLocation,
   draftLocation,
+  focusTarget,
   onMapLongPress,
   onMarkerPress,
   showsUserLocation = false
-}) => {
+}: MapProviderProps) => {
   const bounds = regionToBounds(region);
 
   const userLocationCameraStop =
     getUserLocationCameraStop(userLocation);
 
-  const cameraKey = userLocation
+  const cameraKey = focusTarget ? `event-focus-${focusTarget.requestId}` : userLocation
     ? `user-location-${userLocation.latitude}-${userLocation.longitude}`
     : 'fallback-region';
 
@@ -46,10 +47,13 @@ export const ReactNativeMapProvider: MapProvider = ({
       <Camera
         key={cameraKey}
         initialViewState={{
-          ...(userLocationCameraStop ?? { bounds })
+          ...(focusTarget ? { center: [focusTarget.coordinate.longitude, focusTarget.coordinate.latitude], zoom: 16 } : userLocationCameraStop ?? { bounds })
         }}
+        center={focusTarget ? [focusTarget.coordinate.longitude, focusTarget.coordinate.latitude] : undefined}
+        zoom={focusTarget ? 16 : undefined}
+        duration={0}
         trackUserLocation={
-          showsUserLocation ? 'default' : undefined
+          showsUserLocation && !focusTarget ? 'default' : undefined
         }
       />
 

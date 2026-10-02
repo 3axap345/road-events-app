@@ -27,7 +27,8 @@ export function MapScreen({
 }: MapScreenProps) {
   const activeEventsQuery = useActiveEvents();
   const location = useCurrentLocation();
-  const submit = useSubmitReport();
+  const { submit, viewExisting } = useSubmitReport();
+  const eventFocus = useMapSelectionStore((state) => state.eventFocus);
   const reportLocation = useMapSelectionStore((state) => state.reportLocation);
   const dispatchReportLocation = useMapSelectionStore((state) => state.dispatchReportLocation);
 
@@ -76,6 +77,7 @@ export function MapScreen({
         markers={markers}
         userLocation={userLocation ?? undefined}
         draftLocation={reportLocation.coordinate ?? undefined}
+        focusTarget={eventFocus ?? undefined}
         {...buildReportMapInteractions(reportLocation, dispatchReportLocation, selectEvent)}
         showsUserLocation={location.kind === 'granted'}
       />
@@ -104,7 +106,7 @@ export function MapScreen({
           onDismiss={clearSelection}
         />
       ) : null}
-      <ReportLocationControls state={reportLocation} dispatch={dispatchReportLocation} onSubmit={submit} />
+      <ReportLocationControls state={reportLocation} dispatch={dispatchReportLocation} onSubmit={submit} onViewExisting={viewExisting} />
     </View>
   );
 }

@@ -45,11 +45,21 @@ Database access is protected with PostgreSQL constraints, indexes, Supabase Auth
 
 ## Event lifecycle
 
-Road event states are `active`, `stale`, `removed`, and `expired`. A single configuration module defines initial confidence, confirmation/gone deltas, stale horizon, expiry TTL, removal threshold, and duplicate radius. Pure functions calculate freshness, confidence, expiry, Haversine distance, and same-type nearby duplicate results. Thresholds are replaceable without changing UI components.
+Road event states are `active`, `stale`, `removed`, and `expired`. New reports have a fixed four-hour TTL assigned by PostgreSQL. Confirmation updates counts and `last_confirmed_at`, but never extends TTL or changes confidence. The vote aggregate trigger removes an active event transactionally when `gone_count >= 3 AND gone_count > confirmation_count`, using post-vote totals. Removed and expired states are terminal. Automatic stale transitions are deferred; existing stale rows still expire.
 
-New reports start active. Confirmations improve confidence and freshness; gone votes reduce confidence; sufficient reliable negative signal removes the event; TTL expires it automatically. Stale events remain representable so map UI can visually degrade them later.
+The owner-only `sweep_road_event_lifecycle()` processes up to 500 due rows per minute through Supabase Cron, skipping locked rows for the next run. It expires active/stale rows and reconciles preexisting removal candidates. SELECT RLS hides expired rows using server time even before the scheduled update. No client can mutate lifecycle fields. The pure TypeScript lifecycle evaluator mirrors the rules for tests; it does not write status. Legacy confidence utilities are not used by the vote/lifecycle write path.
+
+Active events refresh every 60 seconds while foregrounded and immediately on resume; timers/listeners are cleaned up on unmount. The existing query key and mutation refresh paths are unchanged. See `docs/event-lifecycle-validation.md` for migration order, executable SQL checks, concurrency checks, and Cron operations.
 
 ## Data flow
+
+Duplicate creation is guarded by migration 0005's SECURITY INVOKER BEFORE INSERT
+trigger: same type, active/unexpired, spherical distance <=150m. A transaction
+advisory lock per type precedes a fresh READ COMMITTED lookup; other isolation
+levels fail closed. Direct INSERT grants/RLS and lifecycle/voting rules remain
+unchanged. Structured duplicate errors return an existing ID, which the client
+can load, focus, and open without voting. See `docs/duplicate-prevention-validation.md`
+and `docs/duplicate-prevention-concurrency.md` for SQL/device/concurrency checks.
 
 On launch, Expo Router renders the map route. The auth boundary establishes anonymous access, location requests foreground permission, and the event query requests active non-expired events through the Supabase repository. TanStack Query owns server state; Zustand holds only interaction state such as a selected marker. The map adapter receives normalized marker view models and returns marker selection to the screen.
 

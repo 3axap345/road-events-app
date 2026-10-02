@@ -19,5 +19,7 @@ export function distanceMeters(first: Coordinates, second: Coordinates): number 
     Math.sin(latitudeDelta / 2) ** 2 +
     Math.cos(firstLatitude) * Math.cos(secondLatitude) * Math.sin(longitudeDelta / 2) ** 2;
 
-  return 2 * EARTH_RADIUS_METERS * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  const clamped = Math.max(0, Math.min(1, haversine));
+  // Match SQL nanometre rounding: avoid floating-point noise at an inclusive boundary.
+  return Math.round(2 * EARTH_RADIUS_METERS * Math.atan2(Math.sqrt(clamped), Math.sqrt(1 - clamped)) * 1e9) / 1e9;
 }

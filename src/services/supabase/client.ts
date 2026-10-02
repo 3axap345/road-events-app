@@ -5,6 +5,7 @@ import { requireAuthenticatedUserId, type AuthenticatedUserGateway } from '../..
 import type { RoadEventsWriteGateway } from '../../features/events/create-event';
 import type { EventVotesGateway } from '../../features/voting/vote-repository';
 import type {
+  RoadEventLookupGateway,
   RoadEventsReadClient,
   RoadEventsReadResult
 } from '../../features/events/event-repository';
@@ -53,14 +54,7 @@ export function getRoadEventsReadClient(): RoadEventsReadClient {
           const selected = table.select(columns);
 
           return {
-            eq: (column, value) => {
-              const filtered = selected.eq(column, value);
-
-              return {
-                gt: async (expiryColumn, expiryValue) =>
-                  toReadResult(await filtered.gt(expiryColumn, expiryValue))
-              };
-            }
+            eq: async (column, value) => toReadResult(await selected.eq(column, value))
           };
         }
       };
@@ -104,6 +98,15 @@ export function getRoadEventsWriteGateway(): RoadEventsWriteGateway {
     insert: async (payload) => {
       const { error } = await getSupabaseClient().from('road_events').insert(payload);
       return { error };
+    }
+  };
+}
+
+export function getRoadEventLookupGateway(): RoadEventLookupGateway {
+  return {
+    readById: async (id) => {
+      const { data, error } = await getSupabaseClient().from('road_events').select('*').eq('id', id).maybeSingle();
+      return { data, error };
     }
   };
 }

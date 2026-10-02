@@ -19,10 +19,15 @@ const insertSchema = z.object({
 
 export interface RoadEventsWriteGateway {
   getUserId(): Promise<string>;
-  insert(payload: z.infer<typeof insertSchema>): Promise<{ error: { message: string } | null }>;
+  insert(payload: z.infer<typeof insertSchema>): Promise<{ error: { message: string; code?: string; details?: string | null } | null }>;
 }
 
-export async function createRoadEvent(gateway: RoadEventsWriteGateway, draft: CreateEventDraft): Promise<void> {
+export type CreateEventResult = { kind: 'created' } | { kind: 'duplicate'; existingEventId: string };
+const duplicateDetailsSchema = z.object({ existing_event_id: z.uuid() }).strict();
+
+export class ReportPermissionError extends Error {}
+
+export async function createRoadEvent(gateway: RoadEventsWriteGateway, draft: CreateEventDraft): Promise<CreateEventResult> {
   const payload = insertSchema.parse({
     reporter_id: await gateway.getUserId(),
     event_type: draft.eventType,
@@ -30,7 +35,13 @@ export async function createRoadEvent(gateway: RoadEventsWriteGateway, draft: Cr
     longitude: draft.coordinate.longitude
   });
   const { error } = await gateway.insert(payload);
+  if (error?.code === 'P1501') {
+    const details = duplicateDetailsSchema.parse(JSON.parse(error.details ?? 'null'));
+    return { kind: 'duplicate', existingEventId: details.existing_event_id };
+  }
+  if (error?.code === '42501') throw new ReportPermissionError('Reporting unavailable');
   if (error) throw new Error(error.message);
+  return { kind: 'created' };
 }
 
 export function createEventMutationOptions(client: QueryClient, gateway: RoadEventsWriteGateway) {

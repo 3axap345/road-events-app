@@ -45,14 +45,14 @@ describe('event lifecycle', () => {
     );
   });
 
-  it('marks an event stale after the configured freshness horizon', () => {
+  it('does not automatically mark an aging event stale', () => {
     const event = makeEvent({
       lastConfirmedAt: new Date(
         NOW.getTime() - EVENT_LIFECYCLE.staleAfterMs
       )
     });
 
-    expect(getEventState(event, NOW)).toBe('stale');
+    expect(getEventState(event, NOW)).toBe('active');
   });
 
   it('expires an event at its expiry timestamp', () => {
@@ -64,12 +64,19 @@ describe('event lifecycle', () => {
     expect(getEventState(event, NOW)).toBe('expired');
   });
 
-  it('removes an event at or below the configured removal threshold', () => {
-    const event = makeEvent({
-      confidence: EVENT_LIFECYCLE.removalThreshold
-    });
+  it.each([
+    [2, 0, 'active'], [3, 0, 'removed'], [3, 2, 'removed'],
+    [3, 3, 'active'], [3, 4, 'active'], [4, 3, 'removed']
+  ] as const)('evaluates gone=%i confirmations=%i as %s', (goneCount, confirmationCount, expected) => {
+    expect(getEventState(makeEvent({ goneCount, confirmationCount }), NOW)).toBe(expected);
+  });
 
-    expect(getEventState(event, NOW)).toBe('removed');
+  it('preserves terminal states and expires stale events without confidence changes', () => {
+    expect(getEventState(makeEvent({ status: 'removed', expiresAt: NOW }), NOW)).toBe('removed');
+    expect(getEventState(makeEvent({ status: 'expired' }), NOW)).toBe('expired');
+    expect(getEventState(makeEvent({ status: 'stale', expiresAt: NOW }), NOW)).toBe('expired');
+    expect(getEventState(makeEvent({ confidence: -100 }), NOW)).toBe('active');
+    expect(getEventState(makeEvent({ goneCount: 3, expiresAt: NOW }), NOW)).toBe('expired');
   });
 });
 
@@ -141,7 +148,8 @@ describe('event distance and duplicates', () => {
         nearbyDifferentType,
         nearbyInactive
       ],
-      EVENT_LIFECYCLE.duplicateRadiusMeters
+      EVENT_LIFECYCLE.duplicateRadiusMeters,
+      NOW
     );
 
     expect(result.kind).toBe('nearby-duplicate');
@@ -167,7 +175,8 @@ describe('event distance and duplicates', () => {
     const result = findNearbyDuplicate(
       candidate,
       [distantEvent],
-      EVENT_LIFECYCLE.duplicateRadiusMeters
+      EVENT_LIFECYCLE.duplicateRadiusMeters,
+      NOW
     );
 
     expect(result.kind).toBe('no-duplicate');

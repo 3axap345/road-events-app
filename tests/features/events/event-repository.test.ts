@@ -7,8 +7,6 @@ import {
   type RoadEventsReadClient
 } from '../../../src/features/events/event-repository';
 
-const NOW = new Date('2026-09-11T12:00:00.000Z');
-
 const activeEventRow = {
   id: 'event-1',
   reporter_id: 'user-1',
@@ -30,30 +28,26 @@ function createReadClient(
   from: ReturnType<typeof vi.fn>;
   select: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
-  gt: ReturnType<typeof vi.fn>;
 } {
-  const gt = vi.fn().mockResolvedValue(result);
-  const eq = vi.fn();
+  const eq = vi.fn().mockResolvedValue(result);
   const select = vi.fn();
   const from = vi.fn();
 
   select.mockReturnValue({ eq });
-  eq.mockReturnValue({ gt });
   from.mockReturnValue({ select });
 
-  return { from, select, eq, gt };
+  return { from, select, eq };
 }
 
 describe('getActiveEvents', () => {
   it('reads only active, non-expired events and maps rows through the domain parser', async () => {
     const client = createReadClient({ data: [activeEventRow], error: null });
 
-    const events = await getActiveEvents(client, NOW);
+    const events = await getActiveEvents(client);
 
     expect(client.from).toHaveBeenCalledWith('road_events');
     expect(client.select).toHaveBeenCalledWith('*');
     expect(client.eq).toHaveBeenCalledWith('status', 'active');
-    expect(client.gt).toHaveBeenCalledWith('expires_at', NOW.toISOString());
     expect(events).toEqual([
       expect.objectContaining({
         id: 'event-1',
@@ -71,7 +65,7 @@ describe('getActiveEvents', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } }
     });
-    const options = activeEventsQueryOptions(client, () => NOW);
+    const options = activeEventsQueryOptions(client);
 
     await expect(queryClient.fetchQuery(options)).rejects.toThrow('Network unavailable');
     expect(queryClient.getQueryState(options.queryKey)?.status).toBe('error');

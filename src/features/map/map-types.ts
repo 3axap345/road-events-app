@@ -10,6 +10,11 @@ export interface MapRegion extends MapCoordinate {
   longitudeDelta: number;
 }
 
+export interface MapFocusTarget {
+  coordinate: MapCoordinate;
+  requestId: number;
+}
+
 export interface MapMarker {
   eventType?: RoadEventType;
   id: string;
@@ -23,6 +28,7 @@ export interface MapProviderProps {
   markers: readonly MapMarker[];
   userLocation?: MapCoordinate;
   draftLocation?: MapCoordinate;
+  focusTarget?: MapFocusTarget;
   onMapLongPress?: (coordinate: MapCoordinate) => void;
   onMarkerPress?: (markerId: string) => void;
   showsUserLocation?: boolean;

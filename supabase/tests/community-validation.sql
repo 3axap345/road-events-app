@@ -150,8 +150,9 @@ set local role authenticated;
 select pg_temp.expect_rejected(format('select public.cast_event_vote(%L,''confirm'')', event_id)) from vote_test_ids;
 select pg_temp.expect_rejected(format('insert into public.event_votes(event_id,user_id,vote_type) values (%L,%L,''confirm'')', event_id, voter)) from vote_test_ids;
 update public.event_votes set vote_type='confirm' where event_id=(select event_id from vote_test_ids);
-select pg_temp.expect_counts(0, 1);
 reset role;
+-- Expired rows are hidden from authenticated SELECT after migration 0003.
+select pg_temp.expect_counts(0, 1);
 update public.road_events set expires_at=o.expires_at from vote_test_original o where id=(select event_id from vote_test_ids);
 
 select set_config('request.jwt.claim.sub', '', true);

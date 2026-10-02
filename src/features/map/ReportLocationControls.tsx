@@ -14,11 +14,14 @@ interface Props {
   state: ReportLocationState;
   dispatch: (action: ReportLocationAction) => void;
   onSubmit: () => Promise<void>;
+  onViewExisting: () => Promise<void>;
 }
 
-export function ReportLocationControls({ state, dispatch, onSubmit }: Props) {
+export function ReportLocationControls({ state, dispatch, onSubmit, onViewExisting }: Props) {
   if (state.kind === 'idle') return null;
   const submitting = state.kind === 'submitting';
+  const duplicate = state.kind === 'duplicate' || state.kind === 'viewing-duplicate';
+  const viewing = state.kind === 'viewing-duplicate';
   const canContinue = (state.kind === 'choosing-type' && state.eventType !== null)
     || state.kind === 'ready';
   return (
@@ -26,11 +29,11 @@ export function ReportLocationControls({ state, dispatch, onSubmit }: Props) {
         <View style={styles.panel}>
           <ScrollView style={styles.scrollContent} contentContainerStyle={styles.panelContent}>
           <Text style={styles.message} accessibilityLiveRegion="polite">
-            {state.kind === 'ready' || state.kind === 'submitting'
+            {duplicate ? 'Такое событие уже отмечено рядом. Новая отметка не добавлена.' : state.kind === 'ready' || state.kind === 'submitting'
               ? `Проверьте событие перед отправкой.\n${TYPE_LABELS[state.eventType]} (${state.eventType})\nШирота: ${state.coordinate.latitude}\nДолгота: ${state.coordinate.longitude}`
               : 'Выберите тип события. Удерживайте другую точку на карте, чтобы изменить место.'}
           </Text>
-          {state.kind === 'ready' && state.error ? (
+          {'error' in state && state.error ? (
             <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
           ) : null}
           {state.kind === 'choosing-type' ? (
@@ -58,12 +61,12 @@ export function ReportLocationControls({ state, dispatch, onSubmit }: Props) {
             </Pressable>
               <Pressable
                 accessibilityRole="button"
-                accessibilityState={{ disabled: !canContinue }}
-                disabled={!canContinue}
-                style={[styles.button, styles.primaryAction, !canContinue && styles.disabled]}
-                onPress={() => state.kind === 'ready' ? void onSubmit() : dispatch({ type: 'continue' })}
+                accessibilityState={{ disabled: duplicate ? viewing : !canContinue, busy: submitting || viewing }}
+                disabled={duplicate ? viewing : !canContinue}
+                style={[styles.button, styles.primaryAction, (duplicate ? viewing : !canContinue) && styles.disabled]}
+                onPress={() => duplicate ? void onViewExisting() : state.kind === 'ready' ? void onSubmit() : dispatch({ type: 'continue' })}
               >
-                <Text style={styles.buttonText}>{submitting ? 'Отправка…' : state.kind === 'choosing-type' ? 'Confirm' : 'Отправить'}</Text>
+                <Text style={styles.buttonText}>{viewing ? 'Загрузка события…' : duplicate ? 'Посмотреть событие' : submitting ? 'Отправка…' : state.kind === 'choosing-type' ? 'Confirm' : 'Отправить'}</Text>
               </Pressable>
           </View>
         </View>
