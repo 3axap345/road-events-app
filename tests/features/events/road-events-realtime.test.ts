@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { bindRoadEventsRealtime } from '../../../src/features/events/road-events-realtime';
 
 describe('road events realtime', () => {
-  it('subscribes to road_events changes, refreshes, and removes the channel on cleanup', () => {
+  it('subscribes to road_events changes, refreshes on changes and subscribe, and cleans up', () => {
     let onChange = () => {};
-    const subscribe = vi.fn();
+    let onStatus = (_status: string) => {};
     const removeChannel = vi.fn();
 
     const channel = {
@@ -18,8 +18,8 @@ describe('road events realtime', () => {
         onChange = callback;
         return channel;
       }),
-      subscribe: vi.fn(() => {
-        subscribe();
+      subscribe: vi.fn((callback) => {
+        onStatus = callback;
         return channel;
       })
     };
@@ -33,10 +33,20 @@ describe('road events realtime', () => {
     const stop = bindRoadEventsRealtime(client, refresh);
 
     expect(client.channel).toHaveBeenCalledWith('road-events');
-    expect(subscribe).toHaveBeenCalledOnce();
+
+    onStatus('SUBSCRIBED');
+    expect(refresh).toHaveBeenCalledTimes(1);
 
     onChange();
-    expect(refresh).toHaveBeenCalledOnce();
+    expect(refresh).toHaveBeenCalledTimes(2);
+
+    onStatus('CHANNEL_ERROR');
+    onStatus('TIMED_OUT');
+    onStatus('CLOSED');
+    expect(refresh).toHaveBeenCalledTimes(2);
+
+    onStatus('SUBSCRIBED');
+    expect(refresh).toHaveBeenCalledTimes(3);
 
     stop();
     expect(removeChannel).toHaveBeenCalledWith(channel);

@@ -1,3 +1,9 @@
+type RealtimeStatus =
+  | 'SUBSCRIBED'
+  | 'CHANNEL_ERROR'
+  | 'TIMED_OUT'
+  | 'CLOSED';
+
 interface RoadEventsRealtimeChannel {
   on(
     type: 'postgres_changes',
@@ -8,7 +14,9 @@ interface RoadEventsRealtimeChannel {
     },
     callback: () => void
   ): RoadEventsRealtimeChannel;
-  subscribe(): RoadEventsRealtimeChannel;
+  subscribe(
+    callback?: (status: RealtimeStatus) => void
+  ): RoadEventsRealtimeChannel;
 }
 
 interface RoadEventsRealtimeClient {
@@ -31,7 +39,11 @@ export function bindRoadEventsRealtime(
       },
       refresh
     )
-    .subscribe();
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        refresh();
+      }
+    });
 
   return () => {
     void client.removeChannel(channel);
