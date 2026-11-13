@@ -1,4 +1,5 @@
 import React, { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
+import type { TextStyle } from 'react-native';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EventDetailsCard } from '../../../src/features/map/EventDetailsCard';
@@ -19,6 +20,11 @@ interface NodeProps {
   accessibilityState?: { selected?: boolean; disabled?: boolean };
   disabled?: boolean;
   onPress?: () => void;
+  style?: TextStyle | TextStyle[];
+  allowFontScaling?: boolean;
+  maxFontSizeMultiplier?: number;
+  numberOfLines?: number;
+  adjustsFontSizeToFit?: boolean;
 }
 function elements(node: ReactNode): ReactElement<NodeProps>[] {
   return Children.toArray(node).flatMap((child) => isValidElement<NodeProps>(child)
@@ -47,6 +53,27 @@ function render(overrides: Partial<VoteCardModel> = {}) {
 }
 
 describe('event details voting presentation', () => {
+  it('gives counters available row width without restricting text scaling or wrapping', () => {
+    // This is a layout contract, not a simulation of Android text measurement.
+    // The original clipping must also be checked on native devices.
+    const card = render({ confirmationLabel: '1 confirmation', goneLabel: '0 no longer there' });
+    for (const label of ['1 confirmation', '0 no longer there']) {
+      const counter = elements(card.tree).find((el) => el.type === 'Text' && el.props.children === label);
+      expect(counter).toBeDefined();
+      const props = counter!.props;
+      const style = Object.assign({}, ...[props.style].flat()) as TextStyle;
+      expect(style.flexGrow).toBe(1);
+      expect(style.flexShrink).toBe(1);
+      expect(style.maxWidth).toBe('100%');
+      expect(style.height).toBeUndefined();
+      expect(style.maxHeight).toBeUndefined();
+      expect(props.numberOfLines).toBeUndefined();
+      expect(props.allowFontScaling).not.toBe(false);
+      expect(props.maxFontSizeMultiplier).toBeUndefined();
+      expect(props.adjustsFontSizeToFit).not.toBe(true);
+    }
+  });
+
   it('renders counters and selected vote with existing title/time/close', () => {
     const card = render();
     expect(text(card.tree)).toContain('3 confirmations');

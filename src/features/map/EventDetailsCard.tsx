@@ -41,8 +41,8 @@ export function EventDetailsCard({
         </Pressable>
       </View>
       <View style={styles.counts}>
-        <Text style={styles.meta}>{voting.confirmationLabel}</Text>
-        <Text style={styles.meta}>{voting.goneLabel}</Text>
+        <Text style={[styles.meta, styles.count]}>{voting.confirmationLabel}</Text>
+        <Text style={[styles.meta, styles.count]}>{voting.goneLabel}</Text>
       </View>
       {voting.notice ? <Text accessibilityLiveRegion="polite" style={styles.meta}>{voting.notice}</Text> : null}
       {voting.actions.length > 0 ? (
@@ -116,6 +116,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     columnGap: 16,
     marginTop: 6
+  },
+  count: {
+    // Give wrapped counters the available row width for Android text measurement.
+    flexGrow: 1,
+    flexShrink: 1,
+    maxWidth: '100%'
   },
   actions: {
     flexDirection: 'row',
