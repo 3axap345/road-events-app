@@ -7,6 +7,7 @@ import { StyleSheet, View } from 'react-native';
 
 import type { MapProviderProps } from './map-types';
 import { RoadEventMarker } from './RoadEventMarker';
+import { mapTheme } from './map-theme';
 import {
   getUserLocationCameraStop,
   regionToBounds
@@ -22,7 +23,9 @@ export const ReactNativeMapProvider = ({
   focusTarget,
   onMapLongPress,
   onMarkerPress,
-  showsUserLocation = false
+  showsUserLocation = false,
+  attributionPosition = { top: 144, right: 16 },
+  locationRequestId = 0
 }: MapProviderProps) => {
   const bounds = regionToBounds(region);
 
@@ -41,13 +44,15 @@ export const ReactNativeMapProvider = ({
         onMapLongPress({ latitude, longitude });
       } : undefined}
       attribution
-      attributionPosition={{ top: 144, right: 16 }}
+      attributionPosition={attributionPosition}
       style={{ flex: 1 }}
     >
       <Camera
-        key={cameraKey}
+        key={`${cameraKey}-${locationRequestId}`}
         initialViewState={{
-          ...(focusTarget ? { center: [focusTarget.coordinate.longitude, focusTarget.coordinate.latitude], zoom: 16 } : userLocationCameraStop ?? { bounds })
+          ...(focusTarget ? { center: [focusTarget.coordinate.longitude, focusTarget.coordinate.latitude], zoom: 16 }
+            : userLocationCameraStop ? { ...userLocationCameraStop, ...(locationRequestId > 0 ? { zoom: 16 } : {}) }
+              : { bounds })
         }}
         center={focusTarget ? [focusTarget.coordinate.longitude, focusTarget.coordinate.latitude] : undefined}
         zoom={focusTarget ? 16 : undefined}
@@ -81,7 +86,7 @@ export const ReactNativeMapProvider = ({
           ]}
           onPress={() => onMarkerPress?.(marker.id)}
         >
-          <RoadEventMarker eventType={marker.eventType} label={marker.title} />
+          <RoadEventMarker eventType={marker.eventType} label={marker.title} variant="map" />
         </Marker>
       ))}
       {draftLocation ? (
@@ -117,6 +122,6 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#38BDF8'
+    backgroundColor: mapTheme.colors.primary
   }
 });

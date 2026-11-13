@@ -14,7 +14,12 @@ vi.stubGlobal('React', React);
 interface Props {
   children?: ReactNode; disabled?: boolean; onPress?: () => void;
   center?: number[]; zoom?: number; duration?: number; trackUserLocation?: string;
+  initialViewState?: { center?: number[]; zoom?: number };
   accessibilityLiveRegion?: string;
+  attribution?: boolean;
+  attributionPosition?: { top: number; right: number };
+  variant?: string;
+  onLongPress?: (event: { nativeEvent: { lngLat: [number, number] } }) => void;
 }
 function elements(node: ReactNode): ReactElement<Props>[] {
   return Children.toArray(node).flatMap((child) => isValidElement<Props>(child) ? [child, ...elements(child.props.children)] : []);
@@ -24,6 +29,32 @@ function text(node: ReactNode): string {
 }
 
 describe('duplicate presentation', () => {
+  it('reinitializes the camera for repeated recenter requests at the same coordinate', () => {
+    const props = { region: { latitude: 42, longitude: 74, latitudeDelta: 0.1, longitudeDelta: 0.1 },
+      markers: [], userLocation: { latitude: 42, longitude: 74 }, showsUserLocation: true };
+    const first = elements(ReactNativeMapProvider({ ...props, locationRequestId: 1 })).find((node) => node.type === 'Camera');
+    const second = elements(ReactNativeMapProvider({ ...props, locationRequestId: 2 })).find((node) => node.type === 'Camera');
+    expect(first).toBeDefined(); expect(second).toBeDefined();
+    expect(first?.key).not.toBe(second?.key);
+    expect(second?.props.trackUserLocation).toBe('default');
+    expect(second?.props.initialViewState).toMatchObject({ center: [74, 42], zoom: 16 });
+  });
+  it('keeps attribution below the measured header and preserves map interactions', () => {
+    const select = vi.fn(); const report = vi.fn();
+    const tree = ReactNativeMapProvider({
+      region: { latitude: 42, longitude: 74, latitudeDelta: 0.1, longitudeDelta: 0.1 },
+      markers: [{ id: 'event', title: 'Accident', eventType: 'accident', coordinate: { latitude: 42, longitude: 74 } }],
+      attributionPosition: { top: 180, right: 24 }, onMarkerPress: select, onMapLongPress: report
+    });
+    expect(tree.props.attribution).toBe(true);
+    expect(tree.props.attributionPosition).toEqual({ top: 180, right: 24 });
+    tree.props.onLongPress?.({ nativeEvent: { lngLat: [74.6, 42.9] } });
+    expect(report).toHaveBeenCalledExactlyOnceWith({ latitude: 42.9, longitude: 74.6 });
+    const nodes = elements(tree);
+    nodes.find((node) => node.type === 'Marker')?.props.onPress?.();
+    expect(select).toHaveBeenCalledExactlyOnceWith('event');
+    expect(nodes.some((node) => node.props.variant === 'map')).toBe(true);
+  });
   it('offers viewing instead of another submission, with accessible feedback', () => {
     const submit = vi.fn(); const view = vi.fn(); const dispatch = vi.fn();
     const tree = ReportLocationControls({ state: { kind: 'duplicate', coordinate: { latitude: 0, longitude: 0 }, eventType: 'accident', existingEventId: 'event' },

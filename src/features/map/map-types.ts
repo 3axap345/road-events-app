@@ -32,4 +32,6 @@ export interface MapProviderProps {
   onMapLongPress?: (coordinate: MapCoordinate) => void;
   onMarkerPress?: (markerId: string) => void;
   showsUserLocation?: boolean;
+  attributionPosition?: { top: number; right: number };
+  locationRequestId?: number;
 }
