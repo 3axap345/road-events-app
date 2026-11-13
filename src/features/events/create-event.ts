@@ -27,6 +27,13 @@ const duplicateDetailsSchema = z.object({ existing_event_id: z.uuid() }).strict(
 
 export class ReportPermissionError extends Error {}
 
+export class ReportRateLimitError extends Error {
+  constructor(public readonly period: '10-minute' | '24-hour' | 'unknown') {
+    super('Road event rate limit exceeded');
+    this.name = 'ReportRateLimitError';
+  }
+}
+
 export async function createRoadEvent(gateway: RoadEventsWriteGateway, draft: CreateEventDraft): Promise<CreateEventResult> {
   const payload = insertSchema.parse({
     reporter_id: await gateway.getUserId(),
@@ -40,6 +47,15 @@ export async function createRoadEvent(gateway: RoadEventsWriteGateway, draft: Cr
     return { kind: 'duplicate', existingEventId: details.existing_event_id };
   }
   if (error?.code === '42501') throw new ReportPermissionError('Reporting unavailable');
+  if (error?.code === 'P1502') {
+    const period = error.details === '10-minute limit exceeded'
+      ? '10-minute'
+      : error.details === '24-hour limit exceeded'
+        ? '24-hour'
+        : 'unknown';
+
+    throw new ReportRateLimitError(period);
+}
   if (error) throw new Error(error.message);
   return { kind: 'created' };
 }

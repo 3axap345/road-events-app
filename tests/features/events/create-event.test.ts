@@ -21,6 +21,43 @@ function flow() {
 }
 
 describe('road event submission', () => {
+    it.each([
+    {
+      details: '10-minute limit exceeded',
+      expectedMessage: '3 события за 10 минут'
+    },
+    {
+      details: '24-hour limit exceeded',
+      expectedMessage: '15 событий за 24 часа'
+    }
+  ])('shows a rate-limit message for $details', async ({ details, expectedMessage }) => {
+    const insert = vi.fn().mockResolvedValue({
+      error: {
+        code: 'P1502',
+        message: 'Road event rate limit exceeded',
+        details
+      }
+    });
+
+    const state = flow();
+
+    await submitReport(
+      state.getState,
+      state.dispatch,
+      (input) => createRoadEvent(
+        { getUserId: async () => userId, insert },
+        input
+      )
+    );
+
+    expect(state.getState()).toMatchObject({
+      kind: 'ready',
+      ...draft,
+      error: expect.stringContaining(expectedMessage)
+    });
+
+    expect(insert).toHaveBeenCalledOnce();
+  });
   it('uses the authenticated user and sends exactly the allowed columns', async () => {
     const insert = vi.fn().mockResolvedValue({ error: null });
     await createRoadEvent({ getUserId: async () => userId, insert }, draft);
