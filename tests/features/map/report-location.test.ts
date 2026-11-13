@@ -6,6 +6,13 @@ const point = { latitude: 42.87, longitude: 74.59 };
 const idle: ReportLocationState = { kind: 'idle', coordinate: null, eventType: null };
 
 describe('report location selection', () => {
+  it('restores the draft after failure and clears the old error on explicit resubmission', () => {
+    const pending: ReportLocationState = { kind: 'submitting', coordinate: point, eventType: 'accident' };
+    const failed = reduceReportLocation(pending, { type: 'submission-failed', error: 'Connection lost' });
+    expect(failed).toEqual({ kind: 'ready', coordinate: point, eventType: 'accident', error: 'Connection lost' });
+    expect(reduceReportLocation(failed, { type: 'submit' })).toEqual(pending);
+  });
+
   it('starts type selection directly from an idle map long press', () => {
     expect(reduceReportLocation(idle, { type: 'long-press', coordinate: point })).toEqual({
       kind: 'choosing-type', coordinate: point, eventType: null

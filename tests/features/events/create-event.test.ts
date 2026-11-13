@@ -1,4 +1,4 @@
-import { QueryClient, QueryObserver } from '@tanstack/react-query';
+import { onlineManager, QueryClient, QueryObserver } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createRoadEvent, createEventMutationOptions, type CreateEventDraft } from '../../../src/features/events/create-event';
@@ -21,6 +21,39 @@ function flow() {
 }
 
 describe('road event submission', () => {
+  it.each(['rejected request', 'returned transport error'])('does not retry an uncertain insert after reconnection: %s', async (failure) => {
+    const client = new QueryClient({ defaultOptions: { mutations: { retry: 3, retryDelay: 0 } } });
+    const wasOnline = onlineManager.isOnline();
+    onlineManager.setOnline(true);
+    client.mount();
+    const insert = vi.fn(async () => {
+      // The server may have saved the event before its response was lost.
+      onlineManager.setOnline(false);
+      if (failure === 'rejected request') throw new TypeError('Network request failed');
+      return { error: { message: 'TypeError: Failed to fetch', code: '', details: '' } };
+    });
+    const state = flow();
+    const mutation = client.getMutationCache().build(client,
+      createEventMutationOptions(client, { getUserId: async () => userId, insert }));
+    try {
+      const pending = submitReport(state.getState, state.dispatch, (input) => mutation.execute(input));
+      await vi.waitFor(() => expect(insert).toHaveBeenCalledOnce());
+      onlineManager.setOnline(true);
+      await pending;
+      await client.resumePausedMutations();
+      expect(mutation.state.status).toBe('error');
+      expect(state.getState()).toEqual({
+        kind: 'ready', ...draft,
+        error: 'Не удалось отправить событие. Проверьте соединение и повторите попытку.'
+      });
+      expect(insert).toHaveBeenCalledOnce();
+    } finally {
+      client.unmount();
+      client.clear();
+      onlineManager.setOnline(wasOnline);
+    }
+  });
+
     it.each([
     {
       details: '10-minute limit exceeded',
@@ -29,6 +62,14 @@ describe('road event submission', () => {
     {
       details: '24-hour limit exceeded',
       expectedMessage: '15 событий за 24 часа'
+    },
+    {
+      details: 'unrecognized server detail',
+      expectedMessage: 'Вы достигли лимита публикаций. Попробуйте позже.'
+    },
+    {
+      details: null,
+      expectedMessage: 'Вы достигли лимита публикаций. Попробуйте позже.'
     }
   ])('shows a rate-limit message for $details', async ({ details, expectedMessage }) => {
     const insert = vi.fn().mockResolvedValue({
