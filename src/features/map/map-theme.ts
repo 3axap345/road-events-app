@@ -1,4 +1,4 @@
-// Shared map and event details presentation. Reporting keeps its existing styles.
+// Shared presentation for the map, event details and reporting panels.
 export const mapTheme = {
   colors: {
     primary: '#168FE8',

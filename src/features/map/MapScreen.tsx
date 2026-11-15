@@ -124,7 +124,8 @@ export function MapScreen({
           topBoundary={attributionTop + mapTheme.size.button + mapTheme.space.large}
         />
       ) : null}
-      <ReportLocationControls state={reportLocation} dispatch={dispatchReportLocation} onSubmit={submit} onViewExisting={viewExisting} />
+      <ReportLocationControls state={reportLocation} dispatch={dispatchReportLocation} onSubmit={submit} onViewExisting={viewExisting}
+        topBoundary={attributionTop + mapTheme.size.button + mapTheme.space.large} />
     </View>
   );
 }

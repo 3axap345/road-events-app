@@ -6,9 +6,11 @@ import { ReactNativeMapProvider } from '../../../src/features/map/react-native-m
 // Native renderers are unavailable in Node. Exercise the real components' props
 // and press contracts; physical layout/camera movement still require the phone.
 vi.mock('react-native', () => ({
-  View: 'View', Text: 'Text', Pressable: 'Pressable', ScrollView: 'ScrollView',
+  View: 'View', Text: 'Text', Pressable: 'Pressable', ScrollView: 'ScrollView', ActivityIndicator: 'ActivityIndicator',
+  useWindowDimensions: () => ({ width: 393, height: 873, fontScale: 1, scale: 2.75 }),
   StyleSheet: { create: (styles: unknown) => styles }
 }));
+vi.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 32, bottom: 24, left: 0, right: 0 }) }));
 vi.mock('@maplibre/maplibre-react-native', () => ({ Camera: 'Camera', Map: 'Map', Marker: 'Marker' }));
 vi.stubGlobal('React', React);
 interface Props {
@@ -58,7 +60,7 @@ describe('duplicate presentation', () => {
   it('offers viewing instead of another submission, with accessible feedback', () => {
     const submit = vi.fn(); const view = vi.fn(); const dispatch = vi.fn();
     const tree = ReportLocationControls({ state: { kind: 'duplicate', coordinate: { latitude: 0, longitude: 0 }, eventType: 'accident', existingEventId: 'event' },
-      dispatch, onSubmit: submit, onViewExisting: view });
+      dispatch, onSubmit: submit, onViewExisting: view, topBoundary: 112 });
     const nodes = elements(tree);
     const button = nodes.find((node) => node.type === 'Pressable' && text(node.props.children) === 'Посмотреть событие');
     expect(button).toBeDefined();
@@ -71,7 +73,7 @@ describe('duplicate presentation', () => {
   });
   it('disables viewing while loading but leaves cancellation available', () => {
     const tree = ReportLocationControls({ state: { kind: 'viewing-duplicate', coordinate: { latitude: 0, longitude: 0 }, eventType: 'accident', existingEventId: 'event' },
-      dispatch: vi.fn(), onSubmit: vi.fn(), onViewExisting: vi.fn() });
+      dispatch: vi.fn(), onSubmit: vi.fn(), onViewExisting: vi.fn(), topBoundary: 112 });
     const nodes = elements(tree);
     expect(nodes.find((node) => node.type === 'Pressable' && text(node.props.children) === 'Загрузка события…')?.props.disabled).toBe(true);
     expect(nodes.find((node) => node.type === 'Pressable' && text(node.props.children) === 'Отмена')?.props.disabled).toBe(false);
