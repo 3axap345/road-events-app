@@ -77,6 +77,7 @@ export function MapScreen({
     ? buildEventCardModel(selectedEvent, now())
     : null;
   const reporting = reportLocation.kind !== 'idle';
+  const attributionTop = insets.top + mapTheme.space.large + (reporting ? 0 : headerHeight + mapTheme.space.large);
   const interactions = buildReportMapInteractions(reportLocation, dispatchReportLocation, selectEvent);
   const status = activeEventsQuery.isPending ? 'Загружаем дорожные события…'
     : events.length === 0 && !activeEventsQuery.isError ? 'Поблизости пока нет отметок. Удерживайте точку, чтобы добавить событие.'
@@ -97,7 +98,7 @@ export function MapScreen({
         showsUserLocation={location.kind === 'granted'}
         locationRequestId={locationRequestId}
         attributionPosition={{
-          top: insets.top + mapTheme.space.large + (reporting ? 0 : headerHeight + mapTheme.space.large),
+          top: attributionTop,
           right: insets.right + mapTheme.space.edge
         }}
       />
@@ -120,6 +121,7 @@ export function MapScreen({
           event={selectedEvent}
           model={selectedEventCard}
           onDismiss={clearSelection}
+          topBoundary={attributionTop + mapTheme.size.button + mapTheme.space.large}
         />
       ) : null}
       <ReportLocationControls state={reportLocation} dispatch={dispatchReportLocation} onSubmit={submit} onViewExisting={viewExisting} />

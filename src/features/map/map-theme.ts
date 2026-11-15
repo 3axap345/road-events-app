@@ -1,7 +1,11 @@
-// Map-only tokens. Voting and reporting retain their existing presentation.
+// Shared map and event details presentation. Reporting keeps its existing styles.
 export const mapTheme = {
   colors: {
     primary: '#168FE8',
+    primaryText: '#075B94',
+    primarySurface: '#E8F4FD',
+    mutedSurface: '#F3F6F8',
+    dangerSurface: '#FFF1F0',
     surface: '#FFFFFF',
     text: '#172B3A',
     secondaryText: '#526777',
